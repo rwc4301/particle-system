@@ -13,32 +13,62 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 // Particle System
-const particleCount = 1000;
+const particleCount = 2500; // Increased for better resolution
 const particlesGeometry = new THREE.BufferGeometry();
 const positions = new Float32Array(particleCount * 3);
 
-const moveScale = 1/2;
-
-// Create positions for a sphere
 const radius = 5;
-for (let i = 0; i < particleCount; i++) {
-    const phi = Math.acos(2 * Math.random() - 1); // Angle from the positive z-axis
-    const theta = Math.random() * Math.PI * 2;   // Angle in the xy-plane
+let index = 0;
 
-    const x = radius * Math.sin(phi) * Math.cos(theta);
-    const y = radius * Math.sin(phi) * Math.sin(theta);
-    const z = radius * Math.cos(phi);
+// Create latitude lines
+for (let lat = -90; lat <= 90; lat += 5) {
+    const phi = (90 - lat) * (Math.PI / 180);
+    const latParticles = 50; // Number of particles per latitude line
+    
+    for (let i = 0; i < latParticles; i++) {
+        const theta = (i / latParticles) * Math.PI * 2;
+        
+        const x = radius * Math.sin(phi) * Math.cos(theta);
+        const y = radius * Math.cos(phi);
+        const z = radius * Math.sin(phi) * Math.sin(theta);
+        
+        if (index < particleCount) {
+            positions[index * 3] = x;
+            positions[index * 3 + 1] = y;
+            positions[index * 3 + 2] = z;
+            index++;
+        }
+    }
+}
 
-    positions[i * 3] = x;
-    positions[i * 3 + 1] = y;
-    positions[i * 3 + 2] = z;
+// Create longitude lines
+for (let lng = 0; lng < 360; lng += 15) {
+    const theta = lng * (Math.PI / 180);
+    const lngParticles = 50; // Number of particles per longitude line
+    
+    for (let i = 0; i < lngParticles; i++) {
+        const phi = (i / lngParticles) * Math.PI;
+        
+        const x = radius * Math.sin(phi) * Math.cos(theta);
+        const y = radius * Math.cos(phi);
+        const z = radius * Math.sin(phi) * Math.sin(theta);
+        
+        if (index < particleCount) {
+            positions[index * 3] = x;
+            positions[index * 3 + 1] = y;
+            positions[index * 3 + 2] = z;
+            index++;
+        }
+    }
 }
 
 particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
 const particlesMaterial = new THREE.PointsMaterial({
     color: 0xffffff,
-    size: 0.02,
+    size: 0.05,
+    transparent: true,
+    opacity: 0.8
 });
 
 const particleSystem = new THREE.Points(particlesGeometry, particlesMaterial);
@@ -65,9 +95,9 @@ composer.addPass(new RenderPass(scene, camera));
 
 const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    1.5, // Bloom strength
-    0.4, // Radius
-    0.85 // Threshold
+    1.0, // Reduced bloom strength
+    0.5, // Slightly increased radius
+    0.2  // Lower threshold for more visible lines
 );
 composer.addPass(bloomPass);
 
